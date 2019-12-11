@@ -1,79 +1,80 @@
 package com.blood.donate.musicplayer;
 
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import androidx.appcompat.app.AppCompatActivity;
-import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+
 public class MainActivity extends AppCompatActivity {
 
+    private static final int MUSIC_REQ = 1;
     Button playBtn;
     SeekBar positionBar;
     SeekBar volumeBar;
     TextView elapsedTimeLabel;
     TextView remainingTimeLabel;
     MediaPlayer mp, mediaPlayer;
-    private Button listpage;
-
     int totalTime;
     Uri myUri;
     TextView TitleText;
+    private Button listpage;
+    @SuppressLint("HandlerLeak")
+    private Handler handler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            int currentPosition = msg.what;
+            // Update positionBar.
+            positionBar.setProgress(currentPosition);
 
+            // Update Labels.
+            String elapsedTime = createTimeLabel(currentPosition);
+            elapsedTimeLabel.setText(elapsedTime);
+
+            String remainingTime = createTimeLabel(totalTime - currentPosition);
+            remainingTimeLabel.setText("- " + remainingTime);
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        playBtn =  findViewById(R.id.playBtn);
-        elapsedTimeLabel =  findViewById(R.id.elapsedTimeLabel);
+        playBtn = findViewById(R.id.playBtn);
+        elapsedTimeLabel = findViewById(R.id.elapsedTimeLabel);
         remainingTimeLabel = findViewById(R.id.remainingTimeLabel);
-        TitleText=findViewById(R.id.tvsongsTitle);
-        listpage=findViewById(R.id.listpage);
+        TitleText = findViewById(R.id.tvsongsTitle);
+        listpage = findViewById(R.id.listpage);
         listpage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
-                startActivity(new Intent(MainActivity.this,AllSongs.class));
+                Intent i=new Intent(MainActivity.this, AllSongs.class);
+                startActivityForResult(i,MUSIC_REQ);
             }
         });
 
-        SharedPreferences pref =getApplicationContext().getSharedPreferences("SONGINFO", MODE_PRIVATE);
-       TitleText.setText( pref.getString("SongTitle",""));
-       String tempuri=pref.getString("SongLocation","");
+        SharedPreferences pref = getApplicationContext().getSharedPreferences("SONGINFO", MODE_PRIVATE);
+        String temptitle=pref.getString("SongTitle", "");
+        String tempuri = pref.getString("SongLocation", "");
 
+        setMusic(temptitle,tempuri);
 
-
-
-
-
-        try {
-            myUri=Uri.parse(tempuri);
-            mediaPlayer = new MediaPlayer();
-            mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-            mediaPlayer.setDataSource(getApplicationContext(), myUri);
-
-            mediaPlayer.prepare();
-            totalTime=mediaPlayer.getDuration();
-            mediaPlayer.setVolume(.5f,.5f);
-            mediaPlayer.seekTo(0
-            );
-
-        }catch (Exception e){
-            Toast.makeText(MainActivity.this,""+e.toString(),Toast.LENGTH_SHORT).show();
-
-        }
 
 
 /*
@@ -149,23 +150,33 @@ public class MainActivity extends AppCompatActivity {
             }
         }).start();
 
+        if (mediaPlayer.isPlaying()) {
+            mediaPlayer.reset();
+        }
+
     }
 
-    private Handler handler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            int currentPosition = msg.what;
-            // Update positionBar.
-            positionBar.setProgress(currentPosition);
+    private void setMusic(String titleText, String tempuri) {
 
-            // Update Labels.
-            String elapsedTime = createTimeLabel(currentPosition);
-            elapsedTimeLabel.setText(elapsedTime);
+        TitleText.setText(titleText);
+        try {
+            myUri = Uri.parse(tempuri);
+            mediaPlayer = new MediaPlayer();
+            mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+            mediaPlayer.setDataSource(getApplicationContext(), myUri);
 
-            String remainingTime = createTimeLabel(totalTime - currentPosition);
-            remainingTimeLabel.setText("- " + remainingTime);
+            mediaPlayer.prepare();
+            totalTime = mediaPlayer.getDuration();
+            mediaPlayer.setVolume(.5f, .5f);
+            mediaPlayer.seekTo(0
+            );
+
+        } catch (Exception e) {
+            Toast.makeText(MainActivity.this, "" + e.toString(), Toast.LENGTH_SHORT).show();
+
         }
-    };
+
+    }
 
     public String createTimeLabel(int time) {
         String timeLabel = "";
@@ -181,6 +192,12 @@ public class MainActivity extends AppCompatActivity {
 
     public void playBtnClick(View view) {
 
+        musicStatus();
+
+
+    }
+
+    private void musicStatus() {
         if (!mediaPlayer.isPlaying()) {
             // Stopping
             mediaPlayer.start();
@@ -197,4 +214,18 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode== MUSIC_REQ && resultCode==RESULT_OK){
+            mediaPlayer.reset();
+
+            Toast.makeText(this, "Back from list", Toast.LENGTH_SHORT).show();
+            String location=data.getStringExtra("path");
+            String song=data.getStringExtra("title");
+            setMusic(song,location);
+
+            musicStatus();
+        }
+    }
 }

@@ -1,21 +1,20 @@
 package com.blood.donate.musicplayer;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
-import android.view.View;
-import android.widget.Button;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +26,6 @@ public class AllSongs extends AppCompatActivity {
     private List<SongsDetails> songsDetails;
 
     private RecyclerView recyclerView;
-    private MyAdapter myAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -102,9 +100,8 @@ public class AllSongs extends AppCompatActivity {
 
     public void doStuff() {
         getmusic();
-        MyAdapter adapter = new MyAdapter(songsDetails, this);
+        MyAdapter adapter = new MyAdapter(songsDetails, this,this);
         recyclerView.setAdapter(adapter);
-
 
     }
 

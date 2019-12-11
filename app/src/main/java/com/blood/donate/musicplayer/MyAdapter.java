@@ -1,5 +1,6 @@
 package com.blood.donate.musicplayer;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -18,14 +19,16 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
 
     private List<SongsDetails> allSong;
     private Context context;
+    private Activity activity;
 
     public MyAdapter() {
 
     }
 
-    public MyAdapter(List<SongsDetails> allSongs, Context context) {
+    public MyAdapter(List<SongsDetails> allSongs, Context context, Activity activity) {
         this.allSong = allSongs;
         this.context = context;
+        this.activity=activity;
     }
 
     @NonNull
@@ -81,11 +84,17 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
             editor.putString("SongLocation", SongLocation);
             editor.apply();
 
-            context.startActivity(new Intent(context,MainActivity.class));
+            Intent i=new Intent(context,MainActivity.class);
+            i.putExtra("path",SongLocation);
+            i.putExtra("title",SongTitle);
 
 
 
+            activity.setResult(Activity.RESULT_OK,i);
+            activity.finish();
 
         }
     }
+
+
 }
